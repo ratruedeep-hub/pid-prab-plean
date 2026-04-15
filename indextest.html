@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Turn Off The Lights - Save the Planet</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+
+        body {
+
+            font-family: 'Kanit', sans-serif;
+
+            touch-action: manipulation;
+
+            background-color: #f0fdf4;
+
+            overflow: hidden;
+
+        }
+
+
+
+        .light-bulb {
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            cursor: pointer;
+
+        }
+
+
+
+        .light-bulb:active {
+
+            transform: scale(0.9);
+
+        }
+
+
+
+        .bulb-on {
+
+            filter: drop-shadow(0 0 15px #facc15);
+
+            animation: pulse 1.5s infinite;
+
+        }
+
+
+
+        @keyframes pulse {
+
+            0% { transform: scale(1); }
+
+            50% { transform: scale(1.05); }
+
+            100% { transform: scale(1); }
+
+        }
+
+
+
+        .screen {
+
+            display: none;
+
+            height: 100vh;
+
+            width: 100%;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            text-align: center;
+
+        }
+
+
+
+        .screen.active {
+
+            display: flex;
+
+        }
+
+
+
+        .game-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 15px;
+
+            max-width: 400px;
+
+            width: 100%;
+
+        }
+
+
+
+        @media (min-width: 640px) {
+
+            .game-grid {
+
+                grid-template-columns: repeat(5, 1fr);
+
+                max-width: 600px;
+
+            }
+
+        }
+
+
+
+        .impact-card {
+
+            background: white;
+
+            border-radius: 1rem;
+
+            padding: 1.5rem;
+
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+            width: 100%;
+
+            max-width: 400px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <!-- 1. Intro Screen -->
+
+    <div id="intro-screen" class="screen active">
+
+        <div class="max-w-md bg-white p-8 rounded-3xl shadow-xl border-t-8 border-green-500">
+
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">💡 Turn Off The Lights</h1>
+
+            <p class="text-gray-600 mb-6">ในออฟฟิศมีไฟที่ถูกเปิดทิ้งไว้โดยไม่จำเป็น...</p>
+
+            
+
+            <div class="space-y-4 text-left mb-8">
+
+                <div class="flex items-start gap-3">
+
+                    <span class="bg-yellow-100 p-2 rounded-lg">🎯</span>
+
+                    <p class="text-sm"><b>ภารกิจ:</b> ปิดไฟที่เปิดอยู่ให้ได้มากที่สุดภายใน <b>30 วินาที</b></p>
+
+                </div>
+
+                <div class="flex items-start gap-3">
+
+                    <span class="bg-blue-100 p-2 rounded-lg">🔌</span>
+
+                    <p class="text-sm">ทุก 1 หลอดที่ปิด = ประหยัดไฟ 1 ชั่วโมง</p>
+
+                </div>
+
+                <div class="flex items-start gap-3">
+
+                    <span class="bg-green-100 p-2 rounded-lg">🌍</span>
+
+                    <p class="text-sm">ยิ่งปิดได้มาก = ยิ่งช่วยลดคาร์บอนและช่วยโลก</p>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="flex justify-center gap-4 mb-6">
+
+                <span class="text-xs font-semibold px-3 py-1 bg-green-100 text-green-700 rounded-full">🔌 ลดพลังงาน</span>
+
+                <span class="text-xs font-semibold px-3 py-1 bg-blue-100 text-blue-700 rounded-full">🌍 ลดคาร์บอน</span>
+
+                <span class="text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">🌱 ช่วยโลก</span>
+
+            </div>
+
+
+
+            <button onclick="startGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-lg">
+
+                👉 เริ่มเกม
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- 2. Game Screen -->
+
+    <div id="game-screen" class="screen">
+
+        <div class="fixed top-0 left-0 w-full p-4 flex justify-between items-center bg-white shadow-sm z-10">
+
+            <div class="text-xl font-bold text-gray-700">เวลา: <span id="timer" class="text-red-500">30</span> วินาที</div>
+
+            <div class="text-xl font-bold text-gray-700">คะแนน: <span id="score" class="text-green-600">0</span></div>
+
+        </div>
+
+
+
+        <div id="game-grid" class="game-grid mt-12">
+
+            <!-- Light bulbs will be generated here -->
+
+        </div>
+
+    </div>
+
+
+
+    <!-- 3. Result Screen -->
+
+    <div id="result-screen" class="screen">
+
+        <div class="impact-card">
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">🎉 จบภารกิจ!</h2>
+
+            <p class="text-lg mb-6">คุณปิดไฟได้ <span id="final-score" class="font-bold text-green-600 text-3xl">0</span> ดวง</p>
+
+            
+
+            <div class="space-y-4 text-left">
+
+                <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+
+                    <p class="text-sm text-yellow-800 font-semibold mb-1">🔋 ประหยัดพลังงานได้:</p>
+
+                    <p class="text-xl font-bold text-yellow-600"><span id="res-hours">0</span> ชั่วโมงของการใช้ไฟ</p>
+
+                </div>
+
+                <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+
+                    <p class="text-sm text-blue-800 font-semibold mb-1">🌍 ช่วยลดคาร์บอน:</p>
+
+                    <p class="text-xl font-bold text-blue-600">ประมาณ <span id="res-co2">0</span> kg CO₂</p>
+
+                </div>
+
+                <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+
+                    <p class="text-sm text-green-800 font-semibold mb-1">🌱 เทียบเท่าการปลูกต้นไม้:</p>
+
+                    <p class="text-xl font-bold text-green-600"><span id="res-trees">0</span> ต้น</p>
+
+                </div>
+
+            </div>
+
+
+
+            <button onclick="restartGame()" class="mt-8 w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition-all">
+
+                เล่นอีกครั้ง 🔄
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Sound Effects (Using Audio API to avoid external assets) -->
+
+    <script>
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playPopSound() {
+
+            const oscillator = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+
+            oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            oscillator.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+
+            oscillator.stop(audioCtx.currentTime + 0.1);
+
+        }
+
+
+
+        // Game State
+
+        let score = 0;
+
+        let timeLeft = 30;
+
+        let gameActive = false;
+
+        let timerInterval;
+
+        let spawnInterval;
+
+        const GRID_SIZE = 20;
+
+
+
+        const introScreen = document.getElementById('intro-screen');
+
+        const gameScreen = document.getElementById('game-screen');
+
+        const resultScreen = document.getElementById('result-screen');
+
+        const gameGrid = document.getElementById('game-grid');
+
+        const timerDisplay = document.getElementById('timer');
+
+        const scoreDisplay = document.getElementById('score');
+
+
+
+        // SVG Icons
+
+        const bulbOnSvg = `<svg viewBox="0 0 24 24" fill="#facc15" class="w-full h-full bulb-on"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/></svg>`;
+
+        const bulbOffSvg = `<svg viewBox="0 0 24 24" fill="#9ca3af" class="w-full h-full"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/></svg>`;
+
+
+
+        function initGrid() {
+
+            gameGrid.innerHTML = '';
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+
+                const bulb = document.createElement('div');
+
+                bulb.className = 'light-bulb bg-gray-100 p-2 rounded-xl h-20 flex items-center justify-center';
+
+                bulb.dataset.id = i;
+
+                bulb.dataset.status = 'off';
+
+                bulb.innerHTML = bulbOffSvg;
+
+                gameGrid.appendChild(bulb);
+
+            }
+
+        }
+
+
+
+        function startGame() {
+
+            score = 0;
+
+            timeLeft = 30;
+
+            gameActive = true;
+
+            
+
+            introScreen.classList.remove('active');
+
+            resultScreen.classList.remove('active');
+
+            gameScreen.classList.add('active');
+
+            
+
+            scoreDisplay.innerText = score;
+
+            timerDisplay.innerText = timeLeft;
+
+            
+
+            initGrid();
+
+            
+
+            timerInterval = setInterval(() => {
+
+                timeLeft--;
+
+                timerDisplay.innerText = timeLeft;
+
+                if (timeLeft <= 0) endGame();
+
+            }, 1000);
+
+
+
+            // Logic to turn on bulbs randomly
+
+            spawnInterval = setInterval(() => {
+
+                if (!gameActive) return;
+
+                const bulbs = document.querySelectorAll('.light-bulb');
+
+                const randomIndex = Math.floor(Math.random() * bulbs.length);
+
+                const target = bulbs[randomIndex];
+
+                
+
+                if (target.dataset.status === 'off') {
+
+                    target.dataset.status = 'on';
+
+                    target.innerHTML = bulbOnSvg;
+
+                    target.classList.add('bg-yellow-50');
+
+                    target.onclick = () => turnOff(target);
+
+                    
+
+                    // Automatically turn off if not clicked after 1.5s
+
+                    setTimeout(() => {
+
+                        if (target.dataset.status === 'on' && gameActive) {
+
+                            resetBulb(target);
+
+                        }
+
+                    }, 1500);
+
+                }
+
+            }, 600);
+
+        }
+
+
+
+        function turnOff(element) {
+
+            if (element.dataset.status !== 'on' || !gameActive) return;
+
+            
+
+            playPopSound();
+
+            score++;
+
+            scoreDisplay.innerText = score;
+
+            
+
+            element.dataset.status = 'done'; // Prevent double click
+
+            element.innerHTML = bulbOffSvg;
+
+            element.classList.remove('bg-yellow-50');
+
+            element.classList.add('bg-green-100');
+
+            
+
+            // Animation for feedback
+
+            element.style.transform = 'scale(0.8)';
+
+            setTimeout(() => {
+
+                element.style.transform = 'scale(1)';
+
+                resetBulb(element);
+
+            }, 200);
+
+        }
+
+
+
+        function resetBulb(element) {
+
+            element.dataset.status = 'off';
+
+            element.innerHTML = bulbOffSvg;
+
+            element.classList.remove('bg-yellow-50', 'bg-green-100');
+
+            element.onclick = null;
+
+        }
+
+
+
+        function endGame() {
+
+            gameActive = false;
+
+            clearInterval(timerInterval);
+
+            clearInterval(spawnInterval);
+
+            
+
+            // Calculate results
+
+            const co2 = score * 0.5;
+
+            const trees = (co2 / 2.5).toFixed(1);
+
+            
+
+            document.getElementById('final-score').innerText = score;
+
+            document.getElementById('res-hours').innerText = score;
+
+            document.getElementById('res-co2').innerText = co2;
+
+            document.getElementById('res-trees').innerText = trees;
+
+            
+
+            gameScreen.classList.remove('active');
+
+            resultScreen.classList.add('active');
+
+        }
+
+
+
+        function restartGame() {
+
+            resultScreen.classList.remove('active');
+
+            introScreen.classList.add('active');
+
+        }
+
+    </script>
+
+</body>
+
+</html>
