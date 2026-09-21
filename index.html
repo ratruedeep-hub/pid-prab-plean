@@ -3,271 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turn Off The Lights - Save the Planet</title>
+    <title>ปิด ปรับ เปลี่ยน - ภารกิจปิดไฟเพื่อโลก</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800;900&display=swap');
+        
         body {
             font-family: 'Kanit', sans-serif;
             touch-action: manipulation;
-            background-color: #f0fdf4;
-            overflow: hidden;
             user-select: none;
-        }
-
-        .light-bulb {
-            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .bulb-on {
-            filter: drop-shadow(0 0 15px #facc15);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .screen {
-            display: none;
+            -webkit-user-select: none;
+            background-color: #0f172a;
+            margin: 0;
+            padding: 0;
             height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-container {
             width: 100%;
+            max-width: 450px;
+            height: 100%;
+            max-height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        @media (min-height: 600px) and (min-width: 480px) {
+            .mobile-container {
+                height: 94vh;
+                max-height: 860px;
+                border-radius: 1.75rem;
+                border: 2px solid rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        .game-canvas {
+            flex: 1;
+            position: relative;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.98) 0%, rgba(241,245,249,1) 100%),
+                linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px, 32px 32px;
+            overflow: hidden;
+        }
+
+        /* 💡 ปุ่มหลอดไฟขนาดใหญ่ กดง่ายสำหรับทุกวัย */
+        .item {
+            position: absolute;
+            transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            text-align: center;
+            z-index: 10;
+            padding: 12px;
+            min-width: 75px;
+            min-height: 75px;
         }
 
-        .screen.active {
-            display: flex;
+        .item-icon {
+            font-size: 4rem;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.2));
+            transition: all 0.2s ease;
         }
 
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            max-width: 400px;
-            width: 100%;
+        /* 💡 หลอดไฟตอนเปิดใช้งาน */
+        .light-on { 
+            color: #f59e0b; 
+            text-shadow: 0 0 28px rgba(245, 158, 11, 0.9);
+            animation: bulbPulse 1.1s infinite alternate ease-in-out;
+        }
+        
+        /* 🌑 หลอดไฟตอนกดปิดแล้ว */
+        .light-off { 
+            color: #64748b !important; 
+            text-shadow: none !important; 
+            opacity: 0.4;
+            transform: scale(0.75);
+            filter: grayscale(1);
         }
 
-        @media (min-width: 640px) {
-            .game-grid {
-                grid-template-columns: repeat(5, 1fr);
-                max-width: 550px;
-            }
+        @keyframes bulbPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+            100% { transform: scale(1.1); filter: drop-shadow(0 0 22px rgba(245, 158, 11, 1)); }
         }
 
-        .impact-card {
+        .score-float {
+            position: absolute;
+            animation: floatUp 0.7s ease-out forwards;
+            font-weight: 800;
+            pointer-events: none;
+            z-index: 100;
+            font-size: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.3); opacity: 0; }
+        }
+
+        #timer-bar { transition: width 1s linear; }
+        
+        .modal-bg { 
+            background: rgba(15, 23, 42, 0.88); 
+            backdrop-filter: blur(6px); 
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .card-custom {
             background: white;
             border-radius: 1.5rem;
-            padding: 2rem;
-            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
-            width: 100%;
-            max-width: 450px;
+            box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.25);
+        }
+
+        /* 🖼️ Logo Styling */
+        .img-logo {
+            max-height: 52px;
+            object-fit: contain;
+        }
+
+        .img-greenplus {
+            max-height: 42px;
+            object-fit: contain;
         }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen">
 
-    <!-- 1. Intro Screen -->
-    <div id="intro-screen" class="screen active">
-        <div class="max-w-md bg-white p-8 rounded-3xl shadow-xl border-t-8 border-green-500">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">💡 Turn Off The Lights</h1>
-            <p class="text-gray-600 mb-6 font-light text-lg">ประหยัดพลังงาน เริ่มต้นง่ายๆ แค่ปลายนิ้ว</p>
-            
-            <div class="space-y-4 text-left mb-8">
-                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                    <span class="text-2xl">🎯</span>
-                    <p class="text-sm text-gray-700"><b>ภารกิจ:</b> ปิดไฟที่เปิดทิ้งไว้ภายใน <b>30 วินาที</b></p>
+    <div class="mobile-container">
+
+        <!-- Top Header with Centered Logo -->
+        <header class="bg-white px-4 py-3 flex items-center justify-center shadow-sm z-30 border-b border-slate-200 shrink-0 relative min-h-[64px]">
+            <!-- 📌 Logo 01: ปิดไฟ ปรับแอร์ เปลี่ยนที่เรา -->
+            <div class="flex items-center justify-center">
+                <img src="logo_01.png" alt="ปิดไฟ ปรับแอร์ เปลี่ยนที่เรา" class="img-logo" onerror="this.onerror=null; this.outerHTML=getLogo01SVG();">
+            </div>
+
+            <!-- Live Stats in header during gameplay -->
+            <div id="live-stats" class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1.5 text-right hidden">
+                <div class="bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 min-w-[42px]">
+                    <p class="text-[8px] uppercase text-slate-500 font-extrabold">เวลา</p>
+                    <p id="timer-text" class="text-base font-black text-slate-800 leading-none">30</p>
                 </div>
-                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                    <span class="text-2xl">🔌</span>
-                    <p class="text-sm text-gray-700">1 หลอด = ประหยัดไฟ 1 ชม.</p>
+                <div class="bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 min-w-[42px]">
+                    <p class="text-[8px] uppercase text-amber-700 font-extrabold">ปิดได้</p>
+                    <p id="score-text" class="text-base font-black text-amber-600 leading-none">0</p>
                 </div>
-                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                    <span class="text-2xl">🌱</span>
-                    <p class="text-sm text-gray-700">ช่วยลดคาร์บอนและปลูกต้นไม้ให้โลก</p>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="w-full h-2.5 bg-slate-200 z-30 shrink-0 relative overflow-hidden">
+            <div id="timer-bar" class="h-full bg-amber-400 w-full shadow-[0_0_10px_rgba(250,204,21,0.8)]"></div>
+        </div>
+
+        <!-- Main Game Area -->
+        <main id="game-area" class="game-canvas">
+
+            <!-- 1️⃣ START SCREEN -->
+            <div id="start-screen" class="absolute inset-0 z-40 modal-bg flex flex-col justify-between p-4 overflow-y-auto">
+                <div class="my-auto py-2">
+                    <div class="card-custom p-5 max-w-sm mx-auto text-center border border-slate-100 relative">
+                        
+                        <!-- Top Center Logo in Modal -->
+                        <div class="flex justify-center mb-3">
+                            <img src="logo_01.png" alt="Logo" class="img-logo" onerror="this.onerror=null; this.outerHTML=getLogo01SVG();">
+                        </div>
+
+                        <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                            <i class="fas fa-lightbulb text-amber-500 text-3xl"></i>
+                        </div>
+
+                        <!-- Target Copywriting Text -->
+                        <div class="bg-amber-50/90 border border-amber-200 p-2.5 rounded-xl text-xs sm:text-sm text-slate-800 mb-2.5 leading-snug font-semibold text-center">
+                            <p class="font-extrabold text-emerald-800">
+                                มาเปลี่ยน “เรื่องเล็ก ๆ” ให้เป็นพลังที่ยิ่งใหญ่ ✨<br>
+                                คุณจะปิดไฟได้กี่ดวงใน 30 วินาที?
+                            </p>
+                        </div>
+
+                        <!-- Rule Info Card (Combined) -->
+                        <div class="bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200 mb-3 text-center">
+                            <p class="text-xs sm:text-sm font-extrabold text-slate-800 leading-relaxed">
+                                ⚡ ปิดไฟ 1 ดวง (1 ชม.)<br>
+                                <span class="text-[#00a86b] font-black">ลดพลังงานไฟฟ้า 0.01 หน่วย</span><br>
+                                <span class="text-emerald-700 font-black">และลดคาร์บอนได้ 0.005 kgCO₂e</span>
+                            </p>
+                        </div>
+
+                        <!-- Player Input Name -->
+                        <div class="mb-4 text-left">
+                            <label for="player-name" class="block text-xs font-bold text-slate-700 mb-1">กรอกชื่อของคุณ</label>
+                            <input type="text" id="player-name" placeholder="ใส่ชื่อผู้เล่นที่นี่" class="w-full px-3.5 py-2.5 text-sm sm:text-base bg-slate-50 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00a86b] font-bold text-slate-800 placeholder-slate-400 text-center shadow-inner">
+                        </div>
+
+                        <!-- Start Button -->
+                        <button onclick="startGame()" class="w-full bg-[#00a86b] hover:bg-[#008f5b] active:bg-[#007a4e] text-white py-3.5 rounded-xl text-base sm:text-lg font-black transition-all transform active:scale-95 shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+                            <span>พร้อมแล้ว กดเริ่มเกม!</span>
+                            <i class="fas fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bottom Logo 02 -->
+                <div class="py-1 text-center shrink-0">
+                    <img src="greenplus_01.png" alt="BG Green Plus" class="img-greenplus mx-auto opacity-95" onerror="this.onerror=null; this.outerHTML=getGreenPlusSVG();">
                 </div>
             </div>
 
-            <button onclick="startGame()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-lg text-xl">
-                เริ่มภารกิจ 🚀
-            </button>
-        </div>
-    </div>
+            <!-- 2️⃣ RESULT SCREEN -->
+            <div id="result-screen" class="absolute inset-0 z-50 modal-bg hidden flex flex-col justify-between p-4 overflow-y-auto">
+                <div class="my-auto py-2">
+                    <div class="card-custom p-5 max-w-sm mx-auto text-center border border-slate-100 shadow-2xl">
+                        
+                        <!-- Top Logo 01 in Result -->
+                        <div class="flex justify-center mb-1">
+                            <img src="logo_01.png" alt="Logo" class="img-logo" onerror="this.onerror=null; this.outerHTML=getLogo01SVG();">
+                        </div>
 
-    <!-- 2. Game Screen -->
-    <div id="game-screen" class="screen">
-        <div class="fixed top-0 left-0 w-full p-4 flex justify-between items-center bg-white/80 backdrop-blur-md shadow-sm z-10">
-            <div class="text-lg font-bold text-gray-700">⏳ เวลา: <span id="timer" class="text-red-500 text-2xl">30</span></div>
-            <div class="text-lg font-bold text-gray-700">💡 ปิดได้: <span id="score" class="text-green-600 text-2xl">0</span></div>
-        </div>
+                        <!-- Greeting Player -->
+                        <h2 id="res-greeting" class="text-lg font-black text-slate-800 mb-1">🎉 เยี่ยมมาก!</h2>
+                        
+                        <!-- Big Score Card -->
+                        <div class="my-2 bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 p-3.5 rounded-2xl text-white shadow-xl relative overflow-hidden border-2 border-emerald-300">
+                            <p class="text-xs font-black uppercase tracking-widest text-emerald-100">จำนวนที่ปิดไฟได้สำเร็จ</p>
+                            
+                            <!-- GIANT SCORE NUMBER -->
+                            <div class="flex items-center justify-center gap-1.5 my-1">
+                                <span id="res-score-count" class="text-6xl sm:text-7xl font-black tracking-tight text-yellow-300 drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]">0</span>
+                                <span class="text-xl font-bold self-end mb-2 text-white">ดวง</span>
+                            </div>
+                        </div>
 
-        <div id="game-grid" class="game-grid mt-10">
-            <!-- Light bulbs generated by JS -->
-        </div>
-    </div>
+                        <!-- Detailed Carbon Calculation Breakdowns -->
+                        <div class="space-y-2 mb-3 text-center">
+                            
+                            <!-- ⚡ 1. ประหยัดพลังงานไฟฟ้า -->
+                            <div class="bg-amber-50/90 p-2.5 rounded-xl border border-amber-200">
+                                <p class="text-xs font-extrabold text-amber-900 flex items-center justify-center gap-1">
+                                    <span>⚡ ประหยัดพลังงานไฟฟ้าได้</span>
+                                </p>
+                                <p class="text-sm font-black text-amber-700 my-0.5">
+                                    <span id="res-energy">0.00</span> หน่วย (kWh)
+                                </p>
+                            </div>
 
-    <!-- 3. Result Screen -->
-    <div id="result-screen" class="screen">
-        <div class="impact-card">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">🎉 ภารกิจสำเร็จ!</h2>
-            <div class="bg-green-100 inline-block px-6 py-2 rounded-full mb-6">
-                <span class="text-green-800">คุณปิดไฟได้ <span id="final-score" class="font-bold text-2xl">0</span> ดวง</span>
+                            <!-- 🌿 2. ลดก๊าซเรือนกระจก -->
+                            <div class="bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
+                                <p class="text-xs font-extrabold text-emerald-900 flex items-center justify-center gap-1">
+                                    <span>🌿 ลดก๊าซเรือนกระจกได้</span>
+                                </p>
+                                <p class="text-sm font-black text-emerald-700 my-0.5">
+                                    <span id="res-carbon">0.000</span> กิโลกรัม CO₂
+                                </p>
+                            </div>
+
+                            <!-- 🌳 3. เทียบเท่ากับการปลูกต้นไม้ -->
+                            <div class="bg-teal-50/90 p-2.5 rounded-xl border border-teal-200">
+                                <p class="text-xs font-extrabold text-teal-900 flex items-center justify-center gap-1">
+                                    <span>🌳 เทียบเท่าต้นไม้</span>
+                                </p>
+                                <p class="text-sm font-black text-teal-800 my-0.5">
+                                    <span id="res-trees" class="text-emerald-700 font-black">0</span> ต้นที่ช่วยดูดซับคาร์บอนไปตลอดทั้งวัน
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <!-- Screenshot Callout (Info Reminder Banner) -->
+                        <div class="bg-amber-100/90 border-2 border-dashed border-amber-400 text-amber-950 p-2.5 rounded-xl mb-3 text-center">
+                            <p class="text-xs sm:text-sm font-black flex items-center justify-center gap-1.5">
+                                <span>📸 อย่าลืมแคปหน้าจอเพื่อร่วมลุ้นรางวัล!</span>
+                            </p>
+                        </div>
+
+                        <!-- Play Again Button (BG Green Plus Style) -->
+                        <button onclick="playAgainDirectly()" class="w-full bg-[#00a86b] hover:bg-[#008f5b] active:bg-[#007a4e] text-white py-3.5 rounded-xl text-base font-black transition transform active:scale-95 shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 mb-2">
+                            <i class="fas fa-rotate-right text-sm"></i>
+                            <span>เล่นอีกครั้ง</span>
+                        </button>
+
+                        <!-- Hashtag Footer -->
+                        <div class="pt-2 border-t border-slate-200 text-xs text-slate-600">
+                            <p class="font-bold text-emerald-800">#BGGreenPlus #เริ่มที่เราเปลี่ยนทั้งโลก</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Logo 02 -->
+                <div class="py-1 text-center shrink-0">
+                    <img src="greenplus_01.png" alt="BG Green Plus" class="img-greenplus mx-auto opacity-95" onerror="this.onerror=null; this.outerHTML=getGreenPlusSVG();">
+                </div>
             </div>
-            
-            <div class="space-y-3 text-left">
-                <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-yellow-700 font-bold uppercase tracking-wider">Energy Saved</p>
-                        <p class="text-lg font-bold text-yellow-900"><span id="res-hours">0</span> ชั่วโมงไฟ</p>
-                    </div>
-                    <span class="text-3xl">🔋</span>
-                </div>
-                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-blue-700 font-bold uppercase tracking-wider">CO2 Reduction</p>
-                        <p class="text-lg font-bold text-blue-900"><span id="res-co2">0</span> kg CO₂</p>
-                    </div>
-                    <span class="text-3xl">🌍</span>
-                </div>
-                <div class="p-4 bg-green-50 rounded-2xl border border-green-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-green-700 font-bold uppercase tracking-wider">Trees Equivalent</p>
-                        <p class="text-lg font-bold text-green-900"><span id="res-trees">0</span> ต้น</p>
-                    </div>
-                    <span class="text-3xl">🌱</span>
-                </div>
-            </div>
 
-            <button onclick="restartGame()" class="mt-8 w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-md">
-                ท้าเพื่อนมาเล่นต่อ 🔄
-            </button>
-        </div>
+        </main>
     </div>
 
     <script>
-        // Audio Logic
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playPopSound() {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
         let score = 0;
         let timeLeft = 30;
         let gameActive = false;
-        let timerInterval;
-        let spawnInterval;
-        const GRID_SIZE = 20;
+        let gameTimer = null;
+        let spawnInterval = null;
+        let playerName = "ฮีโร่";
 
-        const bulbOnSvg = `<svg viewBox="0 0 24 24" fill="#facc15" class="w-12 h-12 bulb-on"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/></svg>`;
-        const bulbOffSvg = `<svg viewBox="0 0 24 24" fill="#d1d5db" class="w-10 h-10"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/></svg>`;
+        const gameArea = document.getElementById('game-area');
+        const scoreText = document.getElementById('score-text');
+        const timerText = document.getElementById('timer-text');
+        const timerBar = document.getElementById('timer-bar');
+        const liveStats = document.getElementById('live-stats');
 
-        function initGrid() {
-            const grid = document.getElementById('game-grid');
-            grid.innerHTML = '';
-            for (let i = 0; i < GRID_SIZE; i++) {
-                const bulb = document.createElement('div');
-                bulb.className = 'light-bulb bg-white rounded-2xl h-24 flex items-center justify-center shadow-sm border border-gray-100';
-                bulb.dataset.status = 'off';
-                bulb.innerHTML = bulbOffSvg;
-                grid.appendChild(bulb);
+        // Audio Context Synthesizer for switch clicks & urgent ticking alarm
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSwitchSound() {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.04);
+                
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.05);
+            } catch (e) {}
+        }
+
+        // ⏰ นาฬิกาเตือน 5 วินาทีสุดท้าย
+        function playClockTick(isUrgent = false) {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = 'sine';
+                const freq = isUrgent ? 1200 : 700;
+                const duration = isUrgent ? 0.06 : 0.04;
+
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq / 2, ctx.currentTime + duration);
+
+                gain.gain.setValueAtTime(isUrgent ? 0.45 : 0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        // SVG Renderers for crisp logo fallbacks
+        function getLogo01SVG() {
+            return `<svg class="img-logo mx-auto" viewBox="0 0 320 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="5" y="42" fill="#1d4ed8" font-family="Kanit, sans-serif" font-weight="900" font-size="38">ปิด</text>
+                <text x="78" y="32" fill="#16a34a" font-family="Kanit, sans-serif" font-weight="900" font-size="20">ไฟ</text>
+                <text x="110" y="42" fill="#1d4ed8" font-family="Kanit, sans-serif" font-weight="900" font-size="38">ปรับ</text>
+                <text x="210" y="32" fill="#1d4ed8" font-family="Kanit, sans-serif" font-weight="900" font-size="20">แอร์</text>
+                <text x="40" y="80" fill="#22c55e" font-family="Kanit, sans-serif" font-weight="900" font-size="38">เปลี่ยน</text>
+                <text x="185" y="80" fill="#22c55e" font-family="Kanit, sans-serif" font-weight="800" font-size="22">ที่เรา</text>
+            </svg>`;
+        }
+
+        function getGreenPlusSVG() {
+            return `<svg class="img-greenplus mx-auto" viewBox="0 0 200 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="32" r="28" fill="#0052cc"/>
+                <text x="13" y="40" fill="#ffffff" font-family="Kanit, sans-serif" font-weight="900" font-size="22">BG</text>
+                <text x="68" y="34" fill="#00a86b" font-family="Kanit, sans-serif" font-weight="900" font-size="24">green</text>
+                <text x="68" y="56" fill="#00a86b" font-family="Kanit, sans-serif" font-weight="900" font-size="24">plus+</text>
+            </svg>`;
         }
 
         function startGame() {
+            const inputName = document.getElementById('player-name').value.trim();
+            if (inputName !== "") {
+                playerName = inputName;
+            }
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'none';
+            liveStats.classList.remove('hidden');
+            
+            gameActive = true;
             score = 0;
             timeLeft = 30;
-            gameActive = true;
             
-            document.getElementById('intro-screen').classList.remove('active');
-            document.getElementById('result-screen').classList.remove('active');
-            document.getElementById('game-screen').classList.add('active');
+            scoreText.innerText = '0';
+            timerText.innerText = '30';
+
+            // Reset timer bar immediately without smooth transition lag
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            timerBar.className = "h-full bg-amber-400 w-full shadow-[0_0_8px_rgba(250,204,21,0.6)]";
+            timerText.className = "text-base font-black text-slate-800 leading-none";
             
-            document.getElementById('score').innerText = score;
-            document.getElementById('timer').innerText = timeLeft;
-            
-            initGrid();
-            
-            timerInterval = setInterval(() => {
+            // Re-enable transition after DOM updates
+            setTimeout(() => {
+                timerBar.style.transition = 'width 1s linear';
+            }, 50);
+
+            // Clean up old items
+            document.querySelectorAll('.item').forEach(el => el.remove());
+
+            if (gameTimer) clearInterval(gameTimer);
+            if (spawnInterval) clearInterval(spawnInterval);
+
+            // Start Countdown
+            gameTimer = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer').innerText = timeLeft;
-                if (timeLeft <= 0) endGame();
+                updateUI();
+                
+                // Sound effect tick for urgency
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    playClockTick(true);
+                    setTimeout(() => playClockTick(true), 250);
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimer);
+                    clearInterval(spawnInterval);
+                    gameActive = false; // Stop spawning/clicking immediately
+                    
+                    // Allow 900ms for timer bar transition to reach 0% visually before showing results
+                    setTimeout(() => {
+                        endGame();
+                    }, 900);
+                }
             }, 1000);
 
+            // Spawn loop
             spawnInterval = setInterval(() => {
-                if (!gameActive) return;
-                const bulbs = document.querySelectorAll('.light-bulb');
-                const available = Array.from(bulbs).filter(b => b.dataset.status === 'off');
-                if (available.length === 0) return;
+                if (gameActive) createLightBulb();
+            }, 460);
 
-                const target = available[Math.floor(Math.random() * available.length)];
-                activateBulb(target);
-            }, 550);
+            // Initial spawn batch
+            createLightBulb();
+            createLightBulb();
         }
 
-        function activateBulb(element) {
-            element.dataset.status = 'on';
-            element.innerHTML = bulbOnSvg;
-            element.classList.add('bg-yellow-50', 'border-yellow-200');
-            element.onclick = () => {
-                if (element.dataset.status === 'on') {
-                    playPopSound();
-                    score++;
-                    document.getElementById('score').innerText = score;
-                    element.dataset.status = 'off';
-                    element.innerHTML = bulbOffSvg;
-                    element.classList.remove('bg-yellow-50', 'border-yellow-200');
-                    element.classList.add('bg-green-50');
-                    setTimeout(() => element.classList.remove('bg-green-50'), 300);
+        function playAgainDirectly() {
+            startGame();
+        }
+
+        function createLightBulb() {
+            if (!gameActive) return;
+
+            const item = document.createElement('div');
+            item.className = 'item';
+            
+            // Default ON state
+            item.innerHTML = `<i class="fas fa-lightbulb light-on item-icon"></i>`;
+
+            const areaW = gameArea.clientWidth;
+            const areaH = gameArea.clientHeight;
+            const bulbSize = 75; 
+            const padding = 15;
+
+            const maxX = Math.max(areaW - bulbSize - padding, 20);
+            const maxY = Math.max(areaH - bulbSize - padding, 20);
+
+            // Get existing bulb positions to prevent overlap
+            const activeBulbs = Array.from(document.querySelectorAll('.item')).map(el => ({
+                x: parseFloat(el.style.left) || 0,
+                y: parseFloat(el.style.top) || 0
+            }));
+
+            let bestX = padding;
+            let bestY = padding;
+            let maxMinDist = -1;
+
+            // Sample candidate coordinates to find a non-overlapping spot
+            for (let i = 0; i < 20; i++) {
+                const candX = Math.floor(Math.random() * (maxX - padding)) + padding;
+                const candY = Math.floor(Math.random() * (maxY - padding)) + padding;
+
+                if (activeBulbs.length === 0) {
+                    bestX = candX;
+                    bestY = candY;
+                    break;
                 }
+
+                let minDist = Infinity;
+                for (const b of activeBulbs) {
+                    const dist = Math.hypot(candX - b.x, candY - b.y);
+                    if (dist < minDist) minDist = dist;
+                }
+
+                if (minDist >= 85) {
+                    bestX = candX;
+                    bestY = candY;
+                    break;
+                }
+
+                if (minDist > maxMinDist) {
+                    maxMinDist = minDist;
+                    bestX = candX;
+                    bestY = candY;
+                }
+            }
+
+            item.style.left = `${bestX}px`;
+            item.style.top = `${bestY}px`;
+
+            // Click / Tap Event: Turn Light OFF!
+            const turnOffAction = function(e) {
+                if (e) e.preventDefault();
+                if (item.getAttribute('data-turned-off')) return;
+                item.setAttribute('data-turned-off', 'true');
+
+                // Play switch click sound
+                playSwitchSound();
+
+                // Switch visual state to light-off
+                const icon = item.querySelector('.item-icon');
+                icon.className = 'fas fa-lightbulb light-off item-icon';
+                
+                score++;
+                scoreText.innerText = score;
+                
+                showFloatingText(bestX, bestY, '+1 💡');
+
+                setTimeout(() => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.5)';
+                    setTimeout(() => item.remove(), 180);
+                }, 160);
             };
 
-            // Auto-off
+            item.addEventListener('touchstart', turnOffAction, { passive: false });
+            item.onclick = turnOffAction;
+
+            gameArea.appendChild(item);
+            
+            // Auto remove after missed timeout
             setTimeout(() => {
-                if (element.dataset.status === 'on' && gameActive) {
-                    element.dataset.status = 'off';
-                    element.innerHTML = bulbOffSvg;
-                    element.classList.remove('bg-yellow-50', 'border-yellow-200');
+                if (item.parentNode && !item.getAttribute('data-turned-off')) {
+                    item.style.opacity = '0';
+                    setTimeout(() => item.remove(), 250);
                 }
-            }, 1200);
+            }, 2100);
+        }
+
+        function showFloatingText(x, y, text) {
+            const float = document.createElement('div');
+            float.className = 'score-float text-emerald-600';
+            float.innerText = text;
+            float.style.left = `${x + 10}px`;
+            float.style.top = `${y}px`;
+            gameArea.appendChild(float);
+            setTimeout(() => float.remove(), 700);
+        }
+
+        function updateUI() {
+            const displayTime = Math.max(0, timeLeft);
+            timerText.innerText = displayTime;
+            const percentage = Math.max(0, (displayTime / 30) * 100);
+            timerBar.style.width = `${percentage}%`;
+            
+            if (timeLeft <= 5) {
+                timerBar.className = "h-full bg-red-500 w-full shadow-[0_0_10px_rgba(239,68,68,0.8)]";
+                timerText.className = "text-base font-black text-red-600 animate-pulse";
+            }
         }
 
         function endGame() {
-            gameActive = false;
-            clearInterval(timerInterval);
-            clearInterval(spawnInterval);
-            
-            const co2 = score * 0.5;
-            const trees = (co2 / 2.5).toFixed(1);
-            
-            document.getElementById('final-score').innerText = score;
-            document.getElementById('res-hours').innerText = score;
-            document.getElementById('res-co2').innerText = co2;
-            document.getElementById('res-trees').innerText = trees;
-            
-            document.getElementById('game-screen').classList.remove('active');
-            document.getElementById('result-screen').classList.add('active');
+            // Ensure timer bar visually finishes at 0%
+            timerBar.style.width = '0%';
+            timerText.innerText = '0';
+
+            liveStats.classList.add('hidden'); // Hide live stats overlay on result screen
+            calculateResults();
+            document.getElementById('result-screen').style.display = 'flex';
         }
 
-        function restartGame() {
-            document.getElementById('result-screen').classList.remove('active');
-            document.getElementById('intro-screen').classList.add('active');
+        function calculateResults() {
+            // Formula Calculations:
+            // 1. Energy: 0.01 kWh per light bulb (10W x 1h)
+            const energySaved = (score * 0.01);
+            
+            // 2. Carbon: 0.01 kWh * 0.5 kg CO2/kWh = 0.005 kg CO2 per bulb
+            const carbonReduced = energySaved * 0.5;
+
+            // 3. Trees equivalent (0.005 kg CO2 / 0.025 kg CO2 per tree/day = 0.2 trees per bulb)
+            const treeCount = Math.round(carbonReduced / 0.025 * 10) / 10;
+
+            if (score === 0) {
+                document.getElementById('res-greeting').innerText = `✌️ สู้ต่อไปนะคุณ ${playerName}!`;
+            } else {
+                document.getElementById('res-greeting').innerText = `🎉 เยี่ยมมากคุณ ${playerName}!`;
+            }
+
+            document.getElementById('res-score-count').innerText = score;
+            document.getElementById('res-[#res-energy]' ? 'res-energy' : 'res-energy').innerText = energySaved.toFixed(2);
+            document.getElementById('res-carbon').innerText = carbonReduced.toFixed(3);
+            document.getElementById('res-trees').innerText = treeCount.toFixed(1);
         }
     </script>
 </body>
