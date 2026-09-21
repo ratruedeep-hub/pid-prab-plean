@@ -344,14 +344,20 @@
         const GAME_SECONDS = 30;
 
         // ⚙️ ปรับความยากได้ที่นี่ (หน่วย ms)
-        // ต้นเกม: ไฟขึ้นช้าและอยู่นาน → ท้ายเกม: ไฟขึ้นถี่และหายไวขึ้นเรื่อย ๆ
-        const DIFFICULTY = {
-            spawnStart: 650,  spawnEnd: 260,   // ช่วงเวลาระหว่างไฟแต่ละดวง
-            lifeStart: 2400,  lifeEnd: 950,    // เวลาที่ไฟค้างอยู่ก่อนหายไปเอง
-            fadeStart: 260,   fadeEnd: 110,    // ความเร็วตอนไฟจางหาย
-            popStart: 220,    popEnd: 110,     // ความเร็วตอนไฟเด้งขึ้นมา
-            pulseStart: 1100, pulseEnd: 550    // ความเร็วการกะพริบของหลอดไฟ
-        };
+        // spawn = ระยะห่างระหว่างไฟแต่ละดวง (ยิ่งน้อยยิ่งขึ้นถี่)
+        // life  = เวลาที่ไฟค้างอยู่ก่อนหายไปเอง
+        // ค่าที่เป็น [a, b]: เฟส 1-2 ค่อย ๆ เปลี่ยนจาก a ไป b ตลอดเฟส / เฟส 3 (random) สุ่มในช่วง a–b ทุกดวง
+        const PHASES = [
+            // 0–10 วิ: จังหวะปกติ
+            { from: 0,  spawn: 650, jitter: 0,
+              life: [2400, 2000], fade: [260, 230], pop: [220, 200], pulse: [1100, 1000] },
+            // 10–20 วิ: ไฟขึ้นเพิ่ม 1.5 เท่า และหายไวขึ้น
+            { from: 10, spawn: 433, jitter: 0,
+              life: [1900, 1500], fade: [190, 150], pop: [170, 140], pulse: [800, 650] },
+            // 20–30 วิ: เร็วสุด ไฟขึ้น 2 เท่า ขึ้นและหายแบบสุ่มไวๆ
+            { from: 20, spawn: 325, jitter: 0.45, random: true,
+              life: [700, 1400], fade: [80, 140], pop: [80, 120], pulse: [380, 550] }
+        ];
 
         let score = 0;
         let timeLeft = GAME_SECONDS;
@@ -369,10 +375,29 @@
 
         const lerp = (a, b, t) => a + (b - a) * t;
 
-        // ความคืบหน้าของเกม 0 → 1
-        function progress() {
-            const elapsed = (performance.now() - startTs) / 1000;
-            return Math.min(1, Math.max(0, elapsed / GAME_SECONDS));
+        // เวลาที่ผ่านไปในเกม (วินาที)
+        function elapsedSec() {
+            return Math.min(GAME_SECONDS, Math.max(0, (performance.now() - startTs) / 1000));
+        }
+
+        // เฟสปัจจุบัน + ความคืบหน้าภายในเฟส (0 → 1)
+        function getPhase() {
+            const e = elapsedSec();
+            let idx = 0;
+            for (let i = 0; i < PHASES.length; i++) {
+                if (e >= PHASES[i].from) idx = i;
+            }
+            const ph = PHASES[idx];
+            const end = PHASES[idx + 1] ? PHASES[idx + 1].from : GAME_SECONDS;
+            const local = Math.min(1, Math.max(0, (e - ph.from) / (end - ph.from)));
+            return { ph, local };
+        }
+
+        // เลือกค่าจากช่วง [a, b]: ปกติไล่ค่าตามเวลา / เฟสสุ่มจะสุ่มทุกดวง
+        function pick(range, ph, local) {
+            return ph.random
+                ? range[0] + Math.random() * (range[1] - range[0])
+                : lerp(range[0], range[1], local);
         }
 
         // Logos embedded as data URIs so the page stays self-contained
@@ -506,14 +531,16 @@
                 }
             }, 1000);
 
-            // Spawn loop: ยิ่งใกล้หมดเวลา ไฟยิ่งขึ้นถี่
+            // Spawn loop: ตามเฟส 0–10 / 10–20 / 20–30 วินาที
             scheduleSpawn();
+            setTimeout(() => { if (gameActive) createLightBulb(); }, 250);
         }
 
         function scheduleSpawn() {
             if (!gameActive) return;
             createLightBulb();
-            const delay = lerp(DIFFICULTY.spawnStart, DIFFICULTY.spawnEnd, progress());
+            const { ph } = getPhase();
+            const delay = ph.spawn * (1 + ph.jitter * (Math.random() * 2 - 1));
             spawnTimeout = setTimeout(scheduleSpawn, delay);
         }
 
@@ -524,12 +551,12 @@
         function createLightBulb() {
             if (!gameActive) return;
 
-            // ค่าตามความคืบหน้าของเกม
-            const t = progress();
-            const life = lerp(DIFFICULTY.lifeStart, DIFFICULTY.lifeEnd, t);
-            const fade = lerp(DIFFICULTY.fadeStart, DIFFICULTY.fadeEnd, t);
-            const pop = lerp(DIFFICULTY.popStart, DIFFICULTY.popEnd, t);
-            const pulse = lerp(DIFFICULTY.pulseStart, DIFFICULTY.pulseEnd, t);
+            // ค่าตามเฟสของเกม
+            const { ph, local } = getPhase();
+            const life = pick(ph.life, ph, local);
+            const fade = pick(ph.fade, ph, local);
+            const pop = pick(ph.pop, ph, local);
+            const pulse = pick(ph.pulse, ph, local);
 
             // ตำแหน่งไฟที่มีอยู่ เพื่อไม่ให้ซ้อนกัน
             const activeBulbs = Array.from(document.querySelectorAll('.item')).map(el => ({
