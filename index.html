@@ -344,19 +344,23 @@
         const GAME_SECONDS = 30;
 
         // ⚙️ ปรับความยากได้ที่นี่ (หน่วย ms)
-        // spawn = ระยะห่างระหว่างไฟแต่ละดวง (ยิ่งน้อยยิ่งขึ้นถี่)
+        // spawn = ระยะห่างระหว่างไฟแต่ละรอบ [ต้นเฟส, ท้ายเฟส] (ยิ่งน้อยยิ่งถี่)
+        // burst = จำนวนดวงที่ขึ้นพร้อมกันในแต่ละรอบ [ต่ำสุด, สูงสุด]
         // life  = เวลาที่ไฟค้างอยู่ก่อนหายไปเอง
-        // ค่าที่เป็น [a, b]: เฟส 1-2 ค่อย ๆ เปลี่ยนจาก a ไป b ตลอดเฟส / เฟส 3 (random) สุ่มในช่วง a–b ทุกดวง
+        // ค่า [a, b]: เฟสปกติค่อย ๆ ไล่จาก a ไป b ตลอดเฟส / เฟส random สุ่มในช่วง a–b ทุกดวง
         const PHASES = [
             // 0–10 วิ: จังหวะปกติ
-            { from: 0,  spawn: 650, jitter: 0,
+            { from: 0,  spawn: [650, 650], burst: [1, 1], jitter: 0,
               life: [2400, 2000], fade: [260, 230], pop: [220, 200], pulse: [1100, 1000] },
-            // 10–20 วิ: ไฟขึ้นเพิ่ม 1.5 เท่า และหายไวขึ้น
-            { from: 10, spawn: 433, jitter: 0,
-              life: [1900, 1500], fade: [190, 150], pop: [170, 140], pulse: [800, 650] },
-            // 20–30 วิ: เร็วสุด ไฟขึ้น 2 เท่า ขึ้นและหายแบบสุ่มไวๆ
-            { from: 20, spawn: 325, jitter: 0.45, random: true,
-              life: [700, 1400], fade: [80, 140], pop: [80, 120], pulse: [380, 550] }
+            // 10–15 วิ: เริ่มไวขึ้น (ไฟเพิ่ม ~1.5 เท่า)
+            { from: 10, spawn: [430, 400], burst: [1, 1], jitter: 0.15,
+              life: [1800, 1400], fade: [190, 150], pop: [170, 140], pulse: [800, 700] },
+            // 15–25 วิ: เริ่มลนลาน ไฟขึ้นถี่ ขึ้นพร้อมกัน 1–2 ดวง หายไวแบบสุ่ม
+            { from: 15, spawn: [360, 260], burst: [1, 2], jitter: 0.4, random: true,
+              life: [600, 1200], fade: [70, 130], pop: [70, 110], pulse: [350, 500] },
+            // 25–30 วิ: วินาทีสุดท้าย กดไม่ทันแน่ ไฟรัวขึ้นทีละ 1–3 ดวง แล้วหายเร็วมาก
+            { from: 25, spawn: [230, 160], burst: [1, 3], jitter: 0.4, random: true,
+              life: [420, 800], fade: [60, 100], pop: [60, 90], pulse: [280, 400] }
         ];
 
         let score = 0;
@@ -538,9 +542,17 @@
 
         function scheduleSpawn() {
             if (!gameActive) return;
-            createLightBulb();
-            const { ph } = getPhase();
-            const delay = ph.spawn * (1 + ph.jitter * (Math.random() * 2 - 1));
+            const { ph, local } = getPhase();
+
+            // ขึ้นทีละ 1 ดวง หรือเป็นชุด (เหลื่อมกันเล็กน้อยให้ดูวุ่นวาย)
+            const count = ph.burst[0] + Math.floor(Math.random() * (ph.burst[1] - ph.burst[0] + 1));
+            for (let i = 0; i < count; i++) {
+                if (i === 0) createLightBulb();
+                else setTimeout(createLightBulb, i * 70);
+            }
+
+            const base = lerp(ph.spawn[0], ph.spawn[1], local);
+            const delay = base * (1 + ph.jitter * (Math.random() * 2 - 1));
             spawnTimeout = setTimeout(scheduleSpawn, delay);
         }
 
