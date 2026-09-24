@@ -226,9 +226,9 @@
                         <!-- Rule Info Card (Combined) -->
                         <div class="bg-emerald-50/90 p-3 rounded-xl border border-emerald-200 mb-4 text-center">
                             <p class="text-sm sm:text-base font-normal text-slate-800 leading-relaxed">
-                                ⚡ ปิดไฟ 1 ดวง (1 ชม.)<br>
-                                <span class="text-[#00a86b] font-semibold">ลดพลังงานไฟฟ้า 0.01 หน่วย</span><br>
-                                <span class="text-emerald-700 font-semibold">และลดคาร์บอนได้ 0.005 kgCO₂e</span>
+                                ⚡ ปิดไฟ 1 ดวง 1 ชม.<br>
+                                <span class="text-[#00a86b] font-semibold">ช่วยลดพลังงานประมาณ 0.018 kWh</span><br>
+                                <span class="text-emerald-700 font-semibold">ลดคาร์บอนไดออกไซด์ได้ 0.0086 kgCO₂e</span>
                             </p>
                         </div>
 
@@ -276,37 +276,43 @@
                             </div>
                         </div>
 
+                        <!-- Annual projection intro (ตัวธรรมดา ไม่เน้น) -->
+                        <p class="text-sm font-normal text-slate-600 mb-2">
+                            หากปิดไฟ <span id="res-score-inline" class="font-medium text-slate-800">0</span> ดวง วันละ 1 ชม. เป็นเวลา 1 ปี
+                        </p>
+
                         <!-- Detailed Carbon Calculation Breakdowns -->
                         <div class="space-y-2 mb-3 text-center">
 
                             <!-- ⚡ 1. ประหยัดพลังงานไฟฟ้า -->
                             <div class="bg-amber-50/90 p-2.5 rounded-xl border border-amber-200">
                                 <p class="text-sm font-normal text-amber-900 flex items-center justify-center gap-1">
-                                    <span>⚡ ประหยัดพลังงานไฟฟ้าได้</span>
+                                    <span>⚡ ช่วยลดพลังงานประมาณ</span>
                                 </p>
                                 <p class="text-base font-normal text-amber-700 mt-0.5">
-                                    <span id="res-energy" class="font-semibold text-xl">0.00</span> หน่วย (kWh)
+                                    <span id="res-energy" class="font-semibold text-xl">0.0</span> kWh
                                 </p>
                             </div>
 
                             <!-- 🌿 2. ลดก๊าซเรือนกระจก -->
                             <div class="bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
                                 <p class="text-sm font-normal text-emerald-900 flex items-center justify-center gap-1">
-                                    <span>🌿 ลดก๊าซเรือนกระจกได้</span>
+                                    <span>🌿 ลดคาร์บอนไดออกไซด์ได้</span>
                                 </p>
                                 <p class="text-base font-normal text-emerald-700 mt-0.5">
-                                    <span id="res-carbon" class="font-semibold text-xl">0.000</span> kgCO₂e
+                                    <span id="res-carbon" class="font-semibold text-xl">0.00</span> kgCO₂e
                                 </p>
                             </div>
 
                             <!-- 🌳 3. เทียบเท่ากับการปลูกต้นไม้ -->
                             <div class="bg-teal-50/90 p-2.5 rounded-xl border border-teal-200">
-                                <p class="text-sm font-normal text-teal-900 flex items-center justify-center gap-1">
-                                    <span>🌳 เทียบเท่าต้นไม้</span>
+                                <p class="text-sm font-normal text-teal-900">🌳 เทียบเท่าต้นไม้</p>
+                                <p class="leading-none mt-1">
+                                    <span id="res-trees" class="text-emerald-700 font-bold text-4xl align-middle">0</span>
+                                    <span class="text-teal-800 font-semibold text-lg align-middle">ต้น</span>
                                 </p>
-                                <p class="text-base font-normal text-teal-800 mt-0.5">
-                                    <span id="res-trees" class="text-emerald-700 font-semibold text-xl">0</span> ต้นที่ช่วยดูดซับคาร์บอนไปตลอดทั้งวัน
-                                </p>
+                                <p class="text-xs text-slate-400 font-normal mt-1.5">ในการดูดซับ CO₂ ต่อปี</p>
+                                <p class="text-[11px] text-slate-400 font-normal mt-0.5">(ขึ้นอยู่กับชนิด พื้นที่ การดูแล และสภาพแวดล้อม)</p>
                             </div>
 
                         </div>
@@ -704,15 +710,17 @@
         }
 
         function calculateResults() {
-            // Formula Calculations:
-            // 1. Energy: 0.01 kWh per light bulb (10W x 1h)
-            const energySaved = (score * 0.01);
+            // สมมติฐาน: ปิดไฟ "score" ดวง วันละ 1 ชม. ทำแบบนี้ต่อเนื่องทุกวันเป็นเวลา 1 ปี (365 วัน)
+            const DAYS_PER_YEAR = 365;
 
-            // 2. Carbon: 0.01 kWh * 0.5 kg CO2/kWh = 0.005 kg CO2 per bulb
-            const carbonReduced = energySaved * 0.5;
+            // 1. พลังงานที่ลดได้ต่อปี: 0.018 kWh ต่อดวงต่อครั้ง (1 ชม.)
+            const energySaved = score * 0.018 * DAYS_PER_YEAR;
 
-            // 3. Trees equivalent (0.005 kg CO2 / 0.025 kg CO2 per tree/day = 0.2 trees per bulb)
-            const treeCount = Math.round(carbonReduced / 0.025 * 10) / 10;
+            // 2. คาร์บอนที่ลดได้ต่อปี: 0.0086 kgCO2e ต่อดวงต่อครั้ง
+            const carbonReduced = score * 0.0086 * DAYS_PER_YEAR;
+
+            // 3. เทียบเท่าต้นไม้: 1 ต้น ดูดซับ CO2 ได้ประมาณ 10 kgCO2/ปี
+            const treeCount = Math.round(carbonReduced / 10);
 
             if (score === 0) {
                 document.getElementById('res-greeting').innerText = `✌️ สู้ต่อไปนะคุณ ${playerName}!`;
@@ -721,9 +729,10 @@
             }
 
             document.getElementById('res-score-count').innerText = score;
-            document.getElementById('res-energy').innerText = energySaved.toFixed(2);
-            document.getElementById('res-carbon').innerText = carbonReduced.toFixed(3);
-            document.getElementById('res-trees').innerText = treeCount.toFixed(1);
+            document.getElementById('res-score-inline').innerText = score;
+            document.getElementById('res-energy').innerText = energySaved.toFixed(1);
+            document.getElementById('res-carbon').innerText = carbonReduced.toFixed(2);
+            document.getElementById('res-trees').innerText = treeCount;
         }
     </script>
 </body>
